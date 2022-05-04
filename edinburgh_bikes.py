@@ -18,23 +18,23 @@ st.write("""
 
 
 # LOAD DATA
-# @st.cache
-# def load_data():
-bikes_df = pd.read_csv(os.path.join('data', 'bikes_df.csv')).astype({'started_at': 'datetime64', 'ended_at': 'datetime64'})
-weather_df = pd.read_csv(os.path.join('data', 'weather_df.csv'))
-dist_df = pd.read_csv(os.path.join('data', 'dist_table.csv'), index_col='station1')
-dist_df.columns.name = 'station2'
+@st.cache
+def load_data():
+    bikes_df = pd.read_csv(os.path.join('data', 'bikes_df.csv')).astype({'started_at': 'datetime64', 'ended_at': 'datetime64'})
+    weather_df = pd.read_csv(os.path.join('data', 'weather_df.csv'))
+    dist_df = pd.read_csv(os.path.join('data', 'dist_table.csv'), index_col='station1')
+    dist_df.columns.name = 'station2'
 
-bwdf = utils.join_bikes_weather()
+    bwdf = utils.join_bikes_weather()
 
-starts_df = pd.DataFrame(bikes_df[['start_station_name']].value_counts(), columns=['num_starts']).rename_axis('station_name')
-ends_df = pd.DataFrame(bikes_df[['end_station_name']].value_counts(), columns=['num_ends']).rename_axis('station_name')
-starts_ends_df = starts_df.join(ends_df, how='outer').fillna(0)
-dates_all = pd.date_range(bikes_df['started_at'].dt.floor('D').min(), bikes_df['started_at'].dt.floor('D').max())
+    starts_df = pd.DataFrame(bikes_df[['start_station_name']].value_counts(), columns=['num_starts']).rename_axis('station_name')
+    ends_df = pd.DataFrame(bikes_df[['end_station_name']].value_counts(), columns=['num_ends']).rename_axis('station_name')
+    starts_ends_df = starts_df.join(ends_df, how='outer').fillna(0)
+    dates_all = pd.date_range(bikes_df['started_at'].dt.floor('D').min(), bikes_df['started_at'].dt.floor('D').max())
 
-    # return bikes_df, weather_df, bwdf, starts_df, ends_df, starts_ends_df, dates_all
+    return bikes_df, weather_df, bwdf, starts_df, ends_df, starts_ends_df, dates_all
 
-# bikes_df, weather_df, bwdf, starts_df, ends_df, starts_ends_df, dates_all = load_data()
+bikes_df, weather_df, bwdf, starts_df, ends_df, starts_ends_df, dates_all = load_data()
 
 st.write("""
 ## Identify the active stations and the inactive stations
