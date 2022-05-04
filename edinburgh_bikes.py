@@ -7,6 +7,7 @@ import folium
 from streamlit_folium import folium_static
 import utils
 import datetime as dt
+import os
 
 st.write("""
 # Edinburgh bikes
@@ -16,9 +17,9 @@ st.write("""
 
 # LOAD DATA
 
-bikes_df = pd.read_pickle('bikes_df.pickle')
-weather_df = pd.read_pickle('weather_df.pickle')
-dist_df = pd.read_pickle('dist_table.pickle')
+bikes_df = pd.read_pickle(os.path.join('data', 'bikes_df.pickle'))
+weather_df = pd.read_pickle(os.path.join('data', 'weather_df.pickle'))
+dist_df = pd.read_pickle(os.path.join('data', 'dist_table.pickle'))
 
 bwdf = utils.join_bikes_weather()
 
