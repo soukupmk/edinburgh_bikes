@@ -4,6 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 import folium
+import streamlit_folium
 from streamlit_folium import folium_static
 import utils
 import datetime as dt

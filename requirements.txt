@@ -3,3 +3,4 @@ streamlit~=1.9.0
 numpy~=1.21.5
 matplotlib~=3.5.1
 folium~=0.12.1.post1
+streamlit-folium~=0.6.7
