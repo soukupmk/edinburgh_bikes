@@ -5,8 +5,8 @@ import os
 
 @st.cache
 def join_bikes_weather():
-    bikes_df = pd.read_pickle(os.path.join('data', 'bikes_df.pickle'))
-    weather_df = pd.read_pickle(os.path.join('data', 'weather_df.pickle'))
+    bikes_df = pd.read_csv(os.path.join('data', 'bikes_df.csv')).astype({'started_at': 'datetime64', 'ended_at': 'datetime64'})
+    weather_df = pd.read_csv(os.path.join('data', 'weather_df.csv'))
 
     bdf = bikes_df['started_at'].dt.round('H').value_counts().sort_index().reset_index()
     bdf.columns = ['time', 'num_rentals']
