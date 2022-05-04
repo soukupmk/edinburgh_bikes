@@ -33,7 +33,7 @@ def load_data():
 
     return bikes_df, weather_df, bwdf, starts_df, ends_df, starts_ends_df, dates_all
 
-bikes_df, weather_df, dist_df, bwdf, starts_df, ends_df, starts_ends_df, dates_all = load_data()
+bikes_df, weather_df, bwdf, starts_df, ends_df, starts_ends_df, dates_all = load_data()
 
 st.write("""
 ## Identify the active stations and the inactive stations
