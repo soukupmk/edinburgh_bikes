@@ -22,7 +22,7 @@ st.write("""
 def load_data():
     bikes_df = pd.read_pickle(os.path.join('data', 'bikes_df.pickle'))
     weather_df = pd.read_pickle(os.path.join('data', 'weather_df.pickle'))
-    dist_df = pd.read_pickle(os.path.join('data', 'dist_table.pickle'))
+    # dist_df = pd.read_pickle(os.path.join('data', 'dist_table.pickle'))
 
     bwdf = utils.join_bikes_weather()
 
@@ -31,7 +31,7 @@ def load_data():
     starts_ends_df = starts_df.join(ends_df, how='outer').fillna(0)
     dates_all = pd.date_range(bikes_df['started_at'].dt.floor('D').min(), bikes_df['started_at'].dt.floor('D').max())
 
-    return bikes_df, weather_df, dist_df, bwdf, starts_df, ends_df, starts_ends_df, dates_all
+    return bikes_df, weather_df, bwdf, starts_df, ends_df, starts_ends_df, dates_all
 
 bikes_df, weather_df, dist_df, bwdf, starts_df, ends_df, starts_ends_df, dates_all = load_data()
 
