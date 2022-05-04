@@ -32,9 +32,9 @@ def load_data():
     starts_ends_df = starts_df.join(ends_df, how='outer').fillna(0)
     dates_all = pd.date_range(bikes_df['started_at'].dt.floor('D').min(), bikes_df['started_at'].dt.floor('D').max())
 
-    return bikes_df, weather_df, bwdf, starts_df, ends_df, starts_ends_df, dates_all
+    return bikes_df, weather_df, dist_df, bwdf, starts_df, ends_df, starts_ends_df, dates_all
 
-bikes_df, weather_df, bwdf, starts_df, ends_df, starts_ends_df, dates_all = load_data()
+bikes_df, weather_df, dist_df, bwdf, starts_df, ends_df, starts_ends_df, dates_all = load_data()
 
 st.write("""
 ## Identify the active stations and the inactive stations
