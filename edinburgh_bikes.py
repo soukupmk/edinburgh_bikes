@@ -15,56 +15,63 @@ st.write("""
 **Author:** Marek Soukup
 """)
 
+
 # LOAD DATA
+@st.cache
+def load_data():
+    bikes_df = pd.read_pickle(os.path.join('data', 'bikes_df.pickle'))
+    weather_df = pd.read_pickle(os.path.join('data', 'weather_df.pickle'))
+    dist_df = pd.read_pickle(os.path.join('data', 'dist_table.pickle'))
 
-bikes_df = pd.read_pickle(os.path.join('data', 'bikes_df.pickle'))
-weather_df = pd.read_pickle(os.path.join('data', 'weather_df.pickle'))
-dist_df = pd.read_pickle(os.path.join('data', 'dist_table.pickle'))
+    bwdf = utils.join_bikes_weather()
 
-bwdf = utils.join_bikes_weather()
+    starts_df = pd.DataFrame(bikes_df[['start_station_name']].value_counts(), columns=['num_starts']).rename_axis('station_name')
+    ends_df = pd.DataFrame(bikes_df[['end_station_name']].value_counts(), columns=['num_ends']).rename_axis('station_name')
+    starts_ends_df = starts_df.join(ends_df, how='outer').fillna(0)
+    dates_all = pd.date_range(bikes_df['started_at'].dt.floor('D').min(), bikes_df['started_at'].dt.floor('D').max())
 
-starts_df = pd.DataFrame(bikes_df[['start_station_name']].value_counts(), columns=['num_starts']).rename_axis(
-    'station_name')
-ends_df = pd.DataFrame(bikes_df[['end_station_name']].value_counts(), columns=['num_ends']).rename_axis(
-    'station_name')
-starts_ends_df = starts_df.join(ends_df, how='outer').fillna(0)
-dates_all = pd.date_range(bikes_df['started_at'].dt.floor('D').min(), bikes_df['started_at'].dt.floor('D').max())
+    return bikes_df, weather_df, dist_df, bwdf, starts_df, ends_df, starts_ends_df, dates_all
+
+bikes_df, weather_df, dist_df, bwdf, starts_df, ends_df, starts_ends_df, dates_all = load_data()
 
 st.write("""
 ## Identify the active stations and the inactive stations
 *activity* = the time difference between 1.7.2021 an the very last record for a given station
 """)
+@st.cache
+def find_active_inactive_stations():
+    df = bikes_df[['start_station_name', 'started_at']]
+    last_start = pd.Timestamp('2021-07-01')
+    df = df.groupby('start_station_name').max()
+    df = df['started_at'].apply(lambda x: last_start-x)
 
-df = bikes_df[['start_station_name', 'started_at']]
-last_start = pd.Timestamp('2021-07-01')
-df = df.groupby('start_station_name').max()
-df = df['started_at'].apply(lambda x: last_start-x)
+    d1 = df.astype('timedelta64[m]').sort_values().iloc[:10]
+    d2 = df.astype('timedelta64[M]').sort_values().iloc[-10:]
+
+    return d1, d2
+
+d1, d2 = find_active_inactive_stations()
 
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(24, 8))
 fig.suptitle("The difference between 1.7.2021 and the last record for selected stations")
-d1 = df.astype('timedelta64[m]').sort_values().iloc[:10]
 d1.plot.bar(ax=ax1, ylabel='minutes', title='active stations')
 ax1.set_xticklabels(d1.index, rotation=45, ha='left')
-
-d2 = df.astype('timedelta64[M]').sort_values().iloc[-10:]
 d2.plot.bar(ax=ax2, ylabel='months', title='inactive stations')
-
 for ax, d in zip([ax1, ax2], [d1, d2]):
     ax.set_xticklabels(d.index, rotation=45, ha='right')
-
 st.pyplot(fig=fig)
 
 st.write("""
 ## Identify the most frequently visited stations
 """)
 
-starts_df = pd.DataFrame(bikes_df[['start_station_name']].value_counts(), columns=['num_starts']).rename_axis('station_name')
-ends_df = pd.DataFrame(bikes_df[['end_station_name']].value_counts(), columns=['num_ends']).rename_axis('station_name')
+@st.cache
+def identify_frequently_visited_stations():
+    df = (starts_ends_df['num_starts'] + starts_ends_df['num_ends']).sort_values(ascending=False).reset_index().rename(columns={0: 'starts_plus_ends'})
+    d = df.iloc[:20].set_index('station_name')
+    return d
 
-starts_ends_df = starts_df.join(ends_df, how='outer').fillna(0)
-df = (starts_ends_df['num_starts'] + starts_ends_df['num_ends']).sort_values(ascending=False).reset_index().rename(columns={0: 'starts_plus_ends'})
-d = df.iloc[:20].set_index('station_name')
-
+d = identify_frequently_visited_stations()
 fig, ax = plt.subplots(figsize=(12, 4))
 d.plot.bar(ax=ax, title='stations with the largest sum of starts and ends')
 ax.set_xticklabels(d.index, rotation=45, ha='right')
@@ -74,8 +81,12 @@ st.write("""
 ## Identify stations with significant excess demand and excess supply
 """)
 
-df = (starts_ends_df['num_ends'] - starts_ends_df['num_starts']).sort_values(ascending=False).reset_index().rename(columns={0: 'ends_minus_starts'})
+@st.cache
+def identify_excess_supply_demand():
+    df = (starts_ends_df['num_ends'] - starts_ends_df['num_starts']).sort_values(ascending=False).reset_index().rename(columns={0: 'ends_minus_starts'})
+    return df
 
+df = identify_excess_supply_demand()
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(18, 4))
 fig.suptitle('The difference between starts and ends')
 d1 = df.iloc[:10].set_index('station_name')
@@ -91,8 +102,6 @@ st.pyplot(fig=fig)
 st.write("""
 ## Calculate the distances between stations
 """)
-
-dist_df = pd.read_pickle('dist_table.pickle')
 st.write("Select your stations:")
 
 c1, c2 = st.columns(2)
@@ -139,10 +148,14 @@ st.pyplot(fig=fig)
 st.write("## Create a map of stations")
 year = st.radio("Select year", [2018, 2019, 2020, 2021])
 
-df = bikes_df.loc[bikes_df.started_at.dt.year == year, ['start_station_name', 'start_station_latitude', 'start_station_longitude']].round(4).drop_duplicates()
-df.columns = ['station_name', 'lat', 'lon']
-df = df.set_index('station_name')
+@st.cache
+def make_map(year):
+    df = bikes_df.loc[bikes_df.started_at.dt.year == year, ['start_station_name', 'start_station_latitude', 'start_station_longitude']].round(4).drop_duplicates()
+    df.columns = ['station_name', 'lat', 'lon']
+    df = df.set_index('station_name')
+    return df
 
+df = make_map(year)
 m = folium.Map(location=df.mean(), zoom_start=12)
 for idx, row in df.reset_index().iterrows():
     folium.Marker(row[['lat', 'lon']].values.tolist(),

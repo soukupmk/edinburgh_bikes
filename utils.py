@@ -1,9 +1,12 @@
 import pandas as pd
+import streamlit as st
+import os
 
 
+@st.cache
 def join_bikes_weather():
-    bikes_df = pd.read_pickle('bikes_df.pickle')
-    weather_df = pd.read_pickle('weather_df.pickle')
+    bikes_df = pd.read_pickle(os.path.join('data', 'bikes_df.pickle'))
+    weather_df = pd.read_pickle(os.path.join('data', 'weather_df.pickle'))
 
     bdf = bikes_df['started_at'].dt.round('H').value_counts().sort_index().reset_index()
     bdf.columns = ['time', 'num_rentals']
